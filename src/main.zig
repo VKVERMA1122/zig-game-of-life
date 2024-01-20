@@ -1,27 +1,34 @@
 const std = @import("std");
 
-const HEIGHT = 25;
-const WIDTH = 50;
+//window height and width
+const HEIGHT: i32 = 25;
+const WIDTH: i32 = 50;
+
+//dead cell
 const BACKGROUND = '-';
+
+//alive cell
 const CELL = '#';
 
+//cell state
 const state = enum {
     DEAD,
     ALIVE,
 };
 
+//cells
 const cell = struct {
     state: state,
 };
 
+//grid array of cells
 var grid: [HEIGHT][WIDTH]cell = undefined;
 
-fn clearTerminal() !void {
+//function to clear terminal after every itre
+fn clear_terminal() !void {
     const os = @import("builtin").os.tag;
 
     var stdout = std.io.getStdOut().writer();
-
-    //defer stdout.deinit();
 
     if (os == .linux or os == .macos or os == .freebsd) {
         try stdout.print("\x1Bc", .{});
@@ -32,9 +39,11 @@ fn clearTerminal() !void {
     }
 }
 
+//grid init
 fn init_grid() !void {
     for (0..HEIGHT) |i| {
         for (0..WIDTH) |j| {
+            //init grid with all dead cells
             grid[i][j].state = state.DEAD;
         }
     }
@@ -44,7 +53,6 @@ fn print_grid() i32 {
     var alive_count: i32 = 0;
     for (0..HEIGHT) |i| {
         for (0..WIDTH) |j| {
-            //std.debug.print("{c}", .{grid[i][j]});
             switch (grid[i][j].state) {
                 .DEAD => {
                     std.debug.print("{c}", .{BACKGROUND});
@@ -59,29 +67,19 @@ fn print_grid() i32 {
 }
 
 fn gen_next() !void {
-    var i: i32 = 0;
-    while (i < HEIGHT) {
-        var j: i32 = 0;
-        while (j < WIDTH) {
-            var k: i32 = -1;
+    for (0..HEIGHT) |i| {
+        for (0..WIDTH) |j| {
             var alive_count: i32 = 0;
-            while (k < 1) {
-                var l: i32 = -1;
-                while (l < 1) {
-                    if (k == 0 and l == 0) {
-                        continue;
-                    }
-                    if (i + k < HEIGHT or i + k > 0 or j + l < WIDTH or j + l > 0) {
-                        const h = @as(i32, i + k);
-                        const g = @as(i32, j + l);
-                        if (grid[h][g].state == state.ALIVE) {
-                            alive_count = alive_count + 1;
-                        }
-                    }
-
-                    l = l + 1;
+            if (i < HEIGHT or i > 0 or j < WIDTH or j > 0 or i - 1 < HEIGHT or i - 1 > 0 or j - 1 < WIDTH or j - 1 > 0) {
+                if (grid[i][j].state == state.ALIVE and grid[i][j].state == state.ALIVE or
+                    grid[i - 1][j].state == state.ALIVE and grid[i][j - 1].state == state.ALIVE or
+                    grid[i][j - 1].state == state.ALIVE and grid[i - 1][j].state == state.ALIVE or
+                    grid[i - 1][j - 1].state == state.ALIVE and grid[i - 1][j - 1].state == state.ALIVE or
+                    grid[i - 1][j].state == state.ALIVE and grid[i - 1][j].state == state.ALIVE or
+                    grid[i][j - 1].state == state.ALIVE and grid[i][j - 1].state == state.ALIVE)
+                {
+                    alive_count = alive_count + 1;
                 }
-                k = k + 1;
             }
             switch (alive_count) {
                 1 => {
@@ -98,10 +96,7 @@ fn gen_next() !void {
                     grid[i][j].state = state.DEAD;
                 },
             }
-
-            j = j + 1;
         }
-        i = i + 1;
     }
 }
 
@@ -109,9 +104,10 @@ pub fn main() !void {
     try init_grid();
     grid[HEIGHT / 2][WIDTH / 2].state = state.ALIVE;
 
+    //try gen_next();
     while (print_grid() != 0) {
         std.time.sleep(500000000);
         try gen_next();
-        try clearTerminal();
+        try clear_terminal();
     }
 }

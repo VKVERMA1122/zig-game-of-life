@@ -1,0 +1,35 @@
+
+fn computeNextState(board: [][]bool, x: usize, y: usize) bool {
+    var alive_neighbors: usize = 0;
+
+    // Check all eight neighbors
+    const offsets = [_]isize{-1, 0, 1};
+    for (offsets) |dx| {
+        for (offsets) |dy| {
+            if (dx == 0 and dy == 0) {
+                continue; // Skip the cell itself
+            }
+            const neighbor_x = x + @intCast(usize, dx);
+            const neighbor_y = y + @intCast(usize, dy);
+
+            // Check boundaries
+            if (neighbor_x >= board.len or neighbor_y >= board[0].len) {
+                continue;
+            }
+            if (board[neighbor_y][neighbor_x]) {
+                alive_neighbors += 1;
+            }
+        }
+    }
+
+    // Apply game rules
+    if (board[y][x]) {
+        // Any live cell with fewer than two live neighbors dies, as if by underpopulation.
+        // Any live cell with two or three live neighbors lives on to the next generation.
+        // Any live cell with more than three live neighbors dies, as if by overpopulation.
+        return alive_neighbors == 2 or alive_neighbors == 3;
+    } else {
+        // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+        return alive_neighbors == 3;
+    }
+}
